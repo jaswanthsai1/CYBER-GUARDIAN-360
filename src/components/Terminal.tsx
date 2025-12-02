@@ -2,19 +2,22 @@ import { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { tools } from '@/lib/tools';
+import { generateRealisticOutput } from '@/lib/realistic-outputs';
 
 interface TerminalLine {
-  type: 'input' | 'output' | 'error' | 'info';
+  type: 'input' | 'output' | 'error' | 'info' | 'success';
   content: string;
   timestamp: Date;
 }
 
 export function Terminal() {
   const [lines, setLines] = useState<TerminalLine[]>([
-    { type: 'info', content: '╔══════════════════════════════════════════════════════════════╗', timestamp: new Date() },
-    { type: 'info', content: '║           CYBER GUARD 360 - TERMINAL INTERFACE               ║', timestamp: new Date() },
-    { type: 'info', content: '║     Type "help" for available commands or tool names         ║', timestamp: new Date() },
-    { type: 'info', content: '╚══════════════════════════════════════════════════════════════╝', timestamp: new Date() },
+    { type: 'info', content: '╔══════════════════════════════════════════════════════════════════════╗', timestamp: new Date() },
+    { type: 'info', content: '║                    CYBER GUARD 360 - TERMINAL v2.1                   ║', timestamp: new Date() },
+    { type: 'info', content: '║              Professional Bug Bounty & Pentest Toolkit               ║', timestamp: new Date() },
+    { type: 'info', content: '╠══════════════════════════════════════════════════════════════════════╣', timestamp: new Date() },
+    { type: 'info', content: '║  Type "help" for commands  |  Type "tools" to list available tools   ║', timestamp: new Date() },
+    { type: 'info', content: '╚══════════════════════════════════════════════════════════════════════╝', timestamp: new Date() },
     { type: 'output', content: '', timestamp: new Date() },
   ]);
   const [input, setInput] = useState('');
@@ -34,46 +37,104 @@ export function Terminal() {
     setLines((prev) => [...prev, { type, content, timestamp: new Date() }]);
   };
 
+  const addLines = (type: TerminalLine['type'], content: string) => {
+    const newLines = content.split('\n').map((line) => ({
+      type,
+      content: line,
+      timestamp: new Date(),
+    }));
+    setLines((prev) => [...prev, ...newLines]);
+  };
+
   const processCommand = async (cmd: string) => {
     const trimmed = cmd.trim().toLowerCase();
-    const parts = trimmed.split(' ');
-    const command = parts[0];
+    const parts = cmd.trim().split(' ');
+    const command = parts[0].toLowerCase();
     const args = parts.slice(1).join(' ');
 
     if (command === 'help') {
       addLine('info', '');
-      addLine('info', '┌─ Available Commands ─────────────────────────────────────────┐');
-      addLine('info', '│ help          - Show this help message                       │');
-      addLine('info', '│ clear         - Clear terminal                               │');
-      addLine('info', '│ tools         - List all available tools                     │');
-      addLine('info', '│ history       - Show command history                         │');
-      addLine('info', '│ <tool> <target> - Execute a tool (e.g., nmap example.com)   │');
-      addLine('info', '└──────────────────────────────────────────────────────────────┘');
+      addLine('success', '┌─────────────────────── AVAILABLE COMMANDS ───────────────────────┐');
+      addLine('info', '│                                                                   │');
+      addLine('info', '│  help              - Display this help menu                       │');
+      addLine('info', '│  clear / cls       - Clear the terminal screen                    │');
+      addLine('info', '│  tools             - List all available security tools            │');
+      addLine('info', '│  history           - Show command history                         │');
+      addLine('info', '│  whoami            - Display current user info                    │');
+      addLine('info', '│  date              - Show current date and time                   │');
+      addLine('info', '│  banner            - Display ASCII banner                         │');
+      addLine('info', '│  <tool> <target>   - Execute a tool (e.g., nmap example.com)     │');
+      addLine('info', '│                                                                   │');
+      addLine('success', '└───────────────────────────────────────────────────────────────────┘');
       return;
     }
 
-    if (command === 'clear') {
+    if (command === 'clear' || command === 'cls') {
       setLines([]);
+      return;
+    }
+
+    if (command === 'whoami') {
+      addLine('output', 'cyberguard@360-terminal');
+      addLine('info', 'Role: Security Analyst');
+      addLine('info', 'Access Level: Full');
+      return;
+    }
+
+    if (command === 'date') {
+      addLine('output', new Date().toString());
+      return;
+    }
+
+    if (command === 'banner') {
+      addLine('success', '');
+      addLine('success', '   ██████╗██╗   ██╗██████╗ ███████╗██████╗      ██████╗ ██╗   ██╗ █████╗ ██████╗ ██████╗ ');
+      addLine('success', '  ██╔════╝╚██╗ ██╔╝██╔══██╗██╔════╝██╔══██╗    ██╔════╝ ██║   ██║██╔══██╗██╔══██╗██╔══██╗');
+      addLine('success', '  ██║      ╚████╔╝ ██████╔╝█████╗  ██████╔╝    ██║  ███╗██║   ██║███████║██████╔╝██║  ██║');
+      addLine('success', '  ██║       ╚██╔╝  ██╔══██╗██╔══╝  ██╔══██╗    ██║   ██║██║   ██║██╔══██║██╔══██╗██║  ██║');
+      addLine('success', '  ╚██████╗   ██║   ██████╔╝███████╗██║  ██║    ╚██████╔╝╚██████╔╝██║  ██║██║  ██║██████╔╝');
+      addLine('success', '   ╚═════╝   ╚═╝   ╚═════╝ ╚══════╝╚═╝  ╚═╝     ╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝ ');
+      addLine('info', '                              [ 360 SECURITY TOOLKIT ]');
+      addLine('success', '');
       return;
     }
 
     if (command === 'tools') {
       addLine('info', '');
-      addLine('info', '┌─ Available Tools ────────────────────────────────────────────┐');
-      tools.forEach((tool) => {
-        addLine('info', `│ ${tool.id.padEnd(15)} - ${tool.description.substring(0, 42).padEnd(42)} │`);
+      addLine('success', '┌─────────────────────── AVAILABLE TOOLS ──────────────────────────┐');
+      addLine('info', '│                                                                   │');
+      
+      const categories = ['recon', 'scanning', 'exploitation', 'fuzzing', 'osint'];
+      categories.forEach((cat) => {
+        const catTools = tools.filter((t) => t.category === cat);
+        if (catTools.length > 0) {
+          addLine('info', `│  [${cat.toUpperCase()}]`);
+          catTools.forEach((tool) => {
+            const paddedName = tool.id.padEnd(15);
+            const desc = tool.description.substring(0, 42).padEnd(42);
+            addLine('info', `│    ${paddedName} - ${desc}│`);
+          });
+          addLine('info', '│                                                                   │');
+        }
       });
-      addLine('info', '└──────────────────────────────────────────────────────────────┘');
+      
+      addLine('success', '└───────────────────────────────────────────────────────────────────┘');
+      addLine('info', '');
+      addLine('info', 'Usage: <tool_name> <target>');
+      addLine('info', 'Example: subfinder example.com');
       return;
     }
 
     if (command === 'history') {
       addLine('info', '');
-      addLine('info', '┌─ Command History ────────────────────────────────────────────┐');
-      history.slice(-10).forEach((h, i) => {
-        addLine('info', `│ ${(i + 1).toString().padStart(2)}. ${h.padEnd(57)} │`);
+      addLine('success', '┌─────────────────────── COMMAND HISTORY ──────────────────────────┐');
+      history.slice(-15).forEach((h, i) => {
+        addLine('info', `│  ${(i + 1).toString().padStart(2)}. ${h.padEnd(60)}│`);
       });
-      addLine('info', '└──────────────────────────────────────────────────────────────┘');
+      if (history.length === 0) {
+        addLine('info', '│  No commands in history                                          │');
+      }
+      addLine('success', '└───────────────────────────────────────────────────────────────────┘');
       return;
     }
 
@@ -81,13 +142,17 @@ export function Terminal() {
     const tool = tools.find((t) => t.id === command);
     if (tool) {
       if (!args) {
-        addLine('error', `[!] Usage: ${tool.id} <target>`);
-        addLine('error', `[!] Example: ${tool.id} ${tool.placeholder}`);
+        addLine('error', `[!] Error: Missing target argument`);
+        addLine('info', `[*] Usage: ${tool.id} <target>`);
+        addLine('info', `[*] Example: ${tool.id} ${tool.placeholder}`);
         return;
       }
 
       setIsProcessing(true);
-      addLine('info', `[*] Executing ${tool.name}...`);
+      addLine('info', '');
+      addLine('info', `[*] Initializing ${tool.name}...`);
+      addLine('info', `[*] Target: ${args}`);
+      addLine('info', `[*] Please wait...`);
 
       try {
         const fullCommand = tool.command.replace('{target}', args);
@@ -104,10 +169,12 @@ export function Terminal() {
 
         if (error) throw error;
 
-        // Simulate execution
-        await new Promise((resolve) => setTimeout(resolve, 1500 + Math.random() * 2000));
+        // Simulate realistic execution time
+        const execTime = 1500 + Math.random() * 3000;
+        await new Promise((resolve) => setTimeout(resolve, execTime));
 
-        const output = generateOutput(tool.id, args);
+        // Generate realistic output
+        const output = generateRealisticOutput(tool.id, args);
         
         // Update with output
         await supabase
@@ -115,20 +182,23 @@ export function Terminal() {
           .update({ output })
           .eq('id', data.id);
 
-        output.split('\n').forEach((line) => {
-          addLine('output', line);
-        });
+        addLine('info', '');
+        addLines('output', output);
+        addLine('info', '');
+        addLine('success', `[+] ${tool.name} completed successfully`);
+        addLine('success', `[+] Output saved to ${tool.id}_output.txt`);
 
       } catch (err) {
         addLine('error', `[!] Error executing ${tool.name}`);
+        addLine('error', `[!] ${err instanceof Error ? err.message : 'Unknown error'}`);
       } finally {
         setIsProcessing(false);
       }
       return;
     }
 
-    addLine('error', `[!] Unknown command: ${command}`);
-    addLine('error', '[!] Type "help" for available commands');
+    addLine('error', `[!] Command not found: ${command}`);
+    addLine('info', '[*] Type "help" for available commands or "tools" to list security tools');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -164,6 +234,14 @@ export function Terminal() {
         setHistoryIndex(-1);
         setInput('');
       }
+    } else if (e.key === 'Tab') {
+      e.preventDefault();
+      // Auto-complete tool names
+      const partial = input.toLowerCase();
+      const match = tools.find((t) => t.id.startsWith(partial));
+      if (match) {
+        setInput(match.id + ' ');
+      }
     }
   };
 
@@ -175,19 +253,25 @@ export function Terminal() {
       {/* Terminal Header */}
       <div className="flex items-center gap-2 px-4 py-2 bg-muted/30 border-b border-border/50">
         <div className="flex gap-1.5">
-          <div className="h-3 w-3 rounded-full bg-destructive/80" />
-          <div className="h-3 w-3 rounded-full bg-warning/80" />
-          <div className="h-3 w-3 rounded-full bg-primary/80" />
+          <div className="h-3 w-3 rounded-full bg-destructive/80 hover:bg-destructive transition-colors cursor-pointer" />
+          <div className="h-3 w-3 rounded-full bg-warning/80 hover:bg-warning transition-colors cursor-pointer" />
+          <div className="h-3 w-3 rounded-full bg-primary/80 hover:bg-primary transition-colors cursor-pointer" />
         </div>
-        <span className="font-mono text-xs text-muted-foreground ml-2">
-          cyberguard@360:~
+        <span className="font-mono text-xs text-muted-foreground ml-2 flex-1">
+          cyberguard@360:~ — bash
         </span>
+        <div className="flex items-center gap-2">
+          {isProcessing && (
+            <span className="text-xs text-warning animate-pulse">● Processing</span>
+          )}
+          <span className="text-xs text-muted-foreground">{lines.length} lines</span>
+        </div>
       </div>
 
       {/* Terminal Output */}
       <div 
         ref={terminalRef}
-        className="flex-1 p-4 overflow-auto font-mono text-sm"
+        className="flex-1 p-4 overflow-auto font-mono text-sm leading-relaxed"
       >
         {lines.map((line, i) => (
           <div 
@@ -197,21 +281,28 @@ export function Terminal() {
               line.type === 'input' && "text-secondary",
               line.type === 'output' && "text-primary terminal-text",
               line.type === 'error' && "text-destructive",
-              line.type === 'info' && "text-muted-foreground"
+              line.type === 'info' && "text-muted-foreground",
+              line.type === 'success' && "text-primary text-glow"
             )}
           >
             {line.content}
           </div>
         ))}
         {isProcessing && (
-          <div className="text-warning typing-cursor">Processing...</div>
+          <div className="text-warning flex items-center gap-2 mt-2">
+            <span className="inline-block h-2 w-2 bg-warning rounded-full animate-pulse" />
+            <span className="typing-cursor">Processing...</span>
+          </div>
         )}
       </div>
 
       {/* Terminal Input */}
-      <form onSubmit={handleSubmit} className="border-t border-border/50 p-2">
-        <div className="flex items-center gap-2 px-2">
-          <span className="text-secondary font-mono text-sm">$</span>
+      <form onSubmit={handleSubmit} className="border-t border-border/50 bg-muted/10">
+        <div className="flex items-center gap-2 px-4 py-3">
+          <span className="text-secondary font-mono text-sm">┌──(cyberguard㉿360)-[~]</span>
+        </div>
+        <div className="flex items-center gap-2 px-4 pb-3">
+          <span className="text-secondary font-mono text-sm">└─$</span>
           <input
             ref={inputRef}
             type="text"
@@ -219,12 +310,12 @@ export function Terminal() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={isProcessing}
-            placeholder={isProcessing ? "Processing..." : "Enter command..."}
+            placeholder={isProcessing ? "Processing..." : "Enter command... (Tab to autocomplete)"}
             className={cn(
               "flex-1 bg-transparent font-mono text-sm text-foreground",
               "placeholder:text-muted-foreground/30",
               "focus:outline-none",
-              "disabled:opacity-50"
+              "disabled:opacity-50 disabled:cursor-not-allowed"
             )}
             autoFocus
           />
@@ -232,39 +323,4 @@ export function Terminal() {
       </form>
     </div>
   );
-}
-
-function generateOutput(toolId: string, target: string): string {
-  const outputs: Record<string, string[]> = {
-    subfinder: [
-      `[INF] Enumerating subdomains for ${target}`,
-      `api.${target}`,
-      `www.${target}`,
-      `mail.${target}`,
-      `admin.${target}`,
-      `dev.${target}`,
-      `[INF] Found 5 subdomains`,
-    ],
-    nmap: [
-      `Starting Nmap 7.94 scan`,
-      `Scanning ${target}...`,
-      `PORT     STATE SERVICE`,
-      `22/tcp   open  ssh`,
-      `80/tcp   open  http`,
-      `443/tcp  open  https`,
-      `Nmap done: 1 IP scanned`,
-    ],
-    sqlmap: [
-      `[*] Testing SQL injection`,
-      `[*] Target URL: ${target}`,
-      `[+] Parameter vulnerable`,
-      `[*] Database: MySQL`,
-    ],
-  };
-
-  return (outputs[toolId] || [
-    `[*] Running ${toolId} on ${target}`,
-    `[*] Scan complete`,
-    `[+] Results saved`,
-  ]).join('\n');
 }

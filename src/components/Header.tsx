@@ -1,4 +1,4 @@
-import { Shield, Terminal, Menu, X } from 'lucide-react';
+import { Shield, Terminal, Menu, X, History, FolderOpen } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -6,7 +6,8 @@ import { cn } from '@/lib/utils';
 const navLinks = [
   { path: '/', label: 'Dashboard', icon: Shield },
   { path: '/terminal', label: 'Terminal', icon: Terminal },
-  { path: '/history', label: 'History', icon: Shield },
+  { path: '/files', label: 'Files', icon: FolderOpen },
+  { path: '/history', label: 'History', icon: History },
 ];
 
 export function Header() {
@@ -56,7 +57,7 @@ export function Header() {
           <div className="hidden md:flex items-center gap-2">
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/30">
               <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-              <span className="font-mono text-xs text-primary">ONLINE</span>
+              <span className="font-mono text-xs text-primary">SYSTEM ONLINE</span>
             </div>
           </div>
 

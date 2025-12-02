@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Play, Loader2 } from 'lucide-react';
+import { Play, Loader2, FileText } from 'lucide-react';
 import { Tool } from '@/lib/tools';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { generateRealisticOutput } from '@/lib/realistic-outputs';
 
 interface ToolCardProps {
   tool: Tool;
@@ -40,15 +41,17 @@ export function ToolCard({ tool, onExecute }: ToolCardProps) {
 
       if (error) throw error;
 
-      // Simulate tool execution (in production, this would call a backend)
-      const simulatedOutput = generateSimulatedOutput(tool, target);
+      // Generate realistic tool output
+      const realisticOutput = generateRealisticOutput(tool.id, target);
       
-      // Update with output after delay
+      // Simulate varying execution times for realism
+      const executionTime = 2000 + Math.random() * 4000;
+      
       setTimeout(async () => {
         await supabase
           .from('tool_executions')
           .update({
-            output: simulatedOutput,
+            output: realisticOutput,
             status: 'completed',
             completed_at: new Date().toISOString(),
           })
@@ -56,8 +59,10 @@ export function ToolCard({ tool, onExecute }: ToolCardProps) {
 
         setIsRunning(false);
         onExecute({ id: data.id, tool, target });
-        toast.success(`${tool.name} completed`);
-      }, 2000 + Math.random() * 3000);
+        toast.success(`${tool.name} completed`, {
+          description: `Output saved to ${tool.name.toLowerCase()}_output.txt`,
+        });
+      }, executionTime);
 
     } catch (error) {
       setIsRunning(false);
@@ -72,22 +77,33 @@ export function ToolCard({ tool, onExecute }: ToolCardProps) {
       "hover:border-primary/50 hover:bg-card transition-all duration-300",
       "hover:shadow-[0_0_30px_hsl(var(--primary)/0.1)]"
     )}>
+      {/* Running Indicator */}
+      {isRunning && (
+        <div className="absolute inset-0 rounded-xl overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 animate-pulse" />
+          <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent animate-scan" />
+        </div>
+      )}
+
       {/* Tool Header */}
-      <div className="flex items-start justify-between mb-3">
+      <div className="flex items-start justify-between mb-3 relative">
         <div className="flex items-center gap-3">
           <span className="text-2xl">{tool.icon}</span>
           <div>
             <h3 className="font-mono font-semibold text-foreground group-hover:text-primary transition-colors">
               {tool.name}
             </h3>
-            <p className="text-xs text-muted-foreground">{tool.description}</p>
+            <p className="text-xs text-muted-foreground line-clamp-1">{tool.description}</p>
           </div>
         </div>
+        <span className="text-[10px] uppercase tracking-wider px-2 py-1 rounded bg-muted/50 text-muted-foreground">
+          {tool.category}
+        </span>
       </div>
 
       {/* Command Preview */}
-      <div className="mb-3 p-2 rounded-lg bg-muted/50 font-mono text-xs text-muted-foreground overflow-x-auto">
-        <code>{tool.command}</code>
+      <div className="mb-3 p-2 rounded-lg bg-muted/50 font-mono text-xs text-muted-foreground overflow-x-auto border border-border/30">
+        <code className="text-secondary">$</code> <code>{tool.command}</code>
       </div>
 
       {/* Input and Execute */}
@@ -105,7 +121,7 @@ export function ToolCard({ tool, onExecute }: ToolCardProps) {
             "disabled:opacity-50 disabled:cursor-not-allowed",
             "transition-all"
           )}
-          onKeyDown={(e) => e.key === 'Enter' && handleExecute()}
+          onKeyDown={(e) => e.key === 'Enter' && !isRunning && handleExecute()}
         />
         <button
           onClick={handleExecute}
@@ -116,75 +132,30 @@ export function ToolCard({ tool, onExecute }: ToolCardProps) {
             "hover:bg-primary/90 active:scale-95",
             "disabled:opacity-50 disabled:cursor-not-allowed",
             "transition-all duration-200",
-            "flex items-center gap-2"
+            "flex items-center gap-2 min-w-[100px] justify-center"
           )}
         >
           {isRunning ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span className="hidden sm:inline">Running</span>
+            </>
           ) : (
-            <Play className="h-4 w-4" />
+            <>
+              <Play className="h-4 w-4" />
+              <span className="hidden sm:inline">Execute</span>
+            </>
           )}
-          {isRunning ? 'Running' : 'Run'}
         </button>
       </div>
+
+      {/* Output indicator */}
+      {isRunning && (
+        <div className="mt-3 flex items-center gap-2 text-xs text-warning">
+          <FileText className="h-3 w-3" />
+          <span>Generating output file...</span>
+        </div>
+      )}
     </div>
   );
-}
-
-// Simulated output generator for demo
-function generateSimulatedOutput(tool: Tool, target: string): string {
-  const outputs: Record<string, string[]> = {
-    subfinder: [
-      `[INF] Enumerating subdomains for ${target}`,
-      `api.${target}`,
-      `www.${target}`,
-      `mail.${target}`,
-      `admin.${target}`,
-      `dev.${target}`,
-      `staging.${target}`,
-      `[INF] Found 6 subdomains for ${target}`,
-    ],
-    nmap: [
-      `Starting Nmap scan for ${target}`,
-      `PORT     STATE SERVICE VERSION`,
-      `22/tcp   open  ssh     OpenSSH 8.4`,
-      `80/tcp   open  http    nginx 1.18.0`,
-      `443/tcp  open  https   nginx 1.18.0`,
-      `3306/tcp open  mysql   MySQL 8.0`,
-      `Nmap done: 1 IP address (1 host up) scanned`,
-    ],
-    sqlmap: [
-      `[*] Starting SQL injection scan`,
-      `[*] Testing connection to the target URL`,
-      `[*] Testing for SQL injection on parameter 'id'`,
-      `[+] Possible SQL injection found`,
-      `[*] Database: MySQL >= 5.0`,
-      `[*] Payload: ' OR 1=1--`,
-    ],
-    nuclei: [
-      `[INF] Running nuclei on ${target}`,
-      `[low] Missing X-Frame-Options Header`,
-      `[medium] Outdated jQuery version detected`,
-      `[info] Technology detected: nginx`,
-      `[info] WordPress installation found`,
-    ],
-    gobuster: [
-      `Gobuster v3.1.0`,
-      `/admin         (Status: 301)`,
-      `/api           (Status: 200)`,
-      `/backup        (Status: 403)`,
-      `/config        (Status: 403)`,
-      `/uploads       (Status: 301)`,
-      `/.git          (Status: 403)`,
-    ],
-  };
-
-  const defaultOutput = [
-    `[*] Executing ${tool.name} against ${target}`,
-    `[*] Scanning in progress...`,
-    `[+] Scan completed successfully`,
-    `[*] Results saved to output.txt`,
-  ];
-
-  return (outputs[tool.id] || defaultOutput).join('\n');
 }
