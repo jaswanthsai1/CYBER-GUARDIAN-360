@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import TerminalPage from "./pages/TerminalPage";
 import HistoryPage from "./pages/HistoryPage";
 import FilesPage from "./pages/FilesPage";
+import DocumentationPage from "./pages/DocumentationPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/terminal" element={<TerminalPage />} />
           <Route path="/files" element={<FilesPage />} />
           <Route path="/history" element={<HistoryPage />} />
+          <Route path="/documentation" element={<DocumentationPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
