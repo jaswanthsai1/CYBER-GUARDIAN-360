@@ -2,7 +2,14 @@ import { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { tools } from '@/lib/tools';
-import { generateRealisticOutput } from '@/lib/realistic-outputs';
+
+// List of security tools that can be executed
+const securityToolNames = ['nmap', 'subfinder', 'amass', 'sublist3r', 'waybackurls', 'gau', 'masscan', 'rustscan', 'httpprobe', 'nuclei', 'nikto', 'whatweb', 'sqlmap', 'xsstrike', 'commix', 'gobuster', 'ffuf', 'dirsearch', 'wfuzz', 'arjun', 'paramspider', 'dnsenum', 'dnsrecon', 'ipinfo', 'whois'];
+
+function isSecurityTool(command: string): boolean {
+  const cmd = command.toLowerCase().split(' ')[0];
+  return securityToolNames.includes(cmd);
+}
 
 interface TerminalLine {
   type: 'input' | 'output' | 'error' | 'info' | 'success';
@@ -140,22 +147,25 @@ export function Terminal() {
 
     // Check if it's a tool command
     const tool = tools.find((t) => t.id === command);
-    if (tool) {
-      if (!args) {
+    if (tool || isSecurityTool(command)) {
+      const matchedTool = tool || tools.find((t) => command.startsWith(t.id));
+      
+      if (!args && !command.includes(' ')) {
         addLine('error', `[!] Error: Missing target argument`);
-        addLine('info', `[*] Usage: ${tool.id} <target>`);
-        addLine('info', `[*] Example: ${tool.id} ${tool.placeholder}`);
+        addLine('info', `[*] Usage: ${command} <target>`);
+        addLine('info', `[*] Example: ${matchedTool?.id || command} ${matchedTool?.placeholder || 'example.com'}`);
         return;
       }
 
       setIsProcessing(true);
       addLine('info', '');
-      addLine('info', `[*] Initializing ${tool.name}...`);
-      addLine('info', `[*] Target: ${args}`);
-      addLine('info', `[*] Please wait...`);
+      addLine('info', `[*] Initializing ${matchedTool?.name || command}...`);
+      addLine('info', `[*] Command: ${cmd}`);
+      addLine('info', `[*] Executing real-time scan...`);
 
       try {
-        const fullCommand = tool.command.replace('{target}', args);
+        const fullCommand = cmd;
+        const targetArg = args || cmd.split(' ').slice(1).join(' ');
         
         // Save to database
         const { data, error } = await supabase
@@ -169,28 +179,39 @@ export function Terminal() {
 
         if (error) throw error;
 
-        // Simulate realistic execution time
-        const execTime = 1500 + Math.random() * 3000;
-        await new Promise((resolve) => setTimeout(resolve, execTime));
-
-        // Generate realistic output
-        const output = generateRealisticOutput(tool.id, args);
+        // Call the edge function with full command for parsing
+        addLine('info', `[*] Connecting to security backend...`);
         
-        // Update with output
-        await supabase
-          .from('terminal_sessions')
-          .update({ output })
-          .eq('id', data.id);
+        const { data: result, error: fnError } = await supabase.functions.invoke('security-tools', {
+          body: { 
+            toolId: matchedTool?.id || command.split(' ')[0],
+            target: targetArg,
+            command: fullCommand 
+          }
+        });
 
-        addLine('info', '');
-        addLines('output', output);
-        addLine('info', '');
-        addLine('success', `[+] ${tool.name} completed successfully`);
-        addLine('success', `[+] Output saved to ${tool.id}_output.txt`);
+        if (fnError) throw fnError;
+
+        if (result?.success && result?.output) {
+          addLine('info', '');
+          addLines('output', result.output);
+          addLine('info', '');
+          addLine('success', `[+] Scan completed successfully`);
+          addLine('success', `[+] Results saved to database`);
+          
+          // Update with output
+          await supabase
+            .from('terminal_sessions')
+            .update({ output: result.output })
+            .eq('id', data.id);
+        } else {
+          throw new Error(result?.error || 'Unknown error from security backend');
+        }
 
       } catch (err) {
-        addLine('error', `[!] Error executing ${tool.name}`);
+        addLine('error', `[!] Error executing command`);
         addLine('error', `[!] ${err instanceof Error ? err.message : 'Unknown error'}`);
+        addLine('info', `[*] Tip: Make sure you're using a valid security tool and target`);
       } finally {
         setIsProcessing(false);
       }
