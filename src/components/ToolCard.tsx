@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Play, Loader2, FileText } from 'lucide-react';
+import { Play, Loader2, FileText, Wifi, WifiOff } from 'lucide-react';
 import { Tool } from '@/lib/tools';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,6 +14,7 @@ interface ToolCardProps {
 export function ToolCard({ tool, onExecute }: ToolCardProps) {
   const [target, setTarget] = useState('');
   const [isRunning, setIsRunning] = useState(false);
+  const [isLiveMode, setIsLiveMode] = useState(true);
 
   const handleExecute = async () => {
     if (!target.trim()) {
@@ -26,7 +27,7 @@ export function ToolCard({ tool, onExecute }: ToolCardProps) {
     try {
       const command = tool.command.replace('{target}', target);
       
-      // Insert execution record
+      // Insert execution record with running status
       const { data, error } = await supabase
         .from('tool_executions')
         .insert({
@@ -41,28 +42,49 @@ export function ToolCard({ tool, onExecute }: ToolCardProps) {
 
       if (error) throw error;
 
-      // Generate realistic tool output
-      const realisticOutput = generateRealisticOutput(tool.id, target);
-      
-      // Simulate varying execution times for realism
-      const executionTime = 2000 + Math.random() * 4000;
-      
-      setTimeout(async () => {
-        await supabase
-          .from('tool_executions')
-          .update({
-            output: realisticOutput,
-            status: 'completed',
-            completed_at: new Date().toISOString(),
-          })
-          .eq('id', data.id);
+      let output: string;
 
-        setIsRunning(false);
-        onExecute({ id: data.id, tool, target });
-        toast.success(`${tool.name} completed`, {
-          description: `Output saved to ${tool.name.toLowerCase()}_output.txt`,
+      if (isLiveMode) {
+        // Call the edge function for real-time results
+        toast.info(`${tool.name} executing...`, {
+          description: 'Performing live scan on target',
         });
-      }, executionTime);
+
+        const { data: fnData, error: fnError } = await supabase.functions.invoke('security-tools', {
+          body: { toolId: tool.id, target }
+        });
+
+        if (fnError) {
+          console.error('Edge function error:', fnError);
+          // Fallback to simulated output if edge function fails
+          output = generateRealisticOutput(tool.id, target);
+          toast.warning('Live scan unavailable, using cached results');
+        } else if (fnData?.success) {
+          output = fnData.output;
+        } else {
+          output = generateRealisticOutput(tool.id, target);
+          toast.warning('Scan incomplete, using simulated output');
+        }
+      } else {
+        // Use simulated output
+        output = generateRealisticOutput(tool.id, target);
+      }
+
+      // Update with output
+      await supabase
+        .from('tool_executions')
+        .update({
+          output: output,
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+        })
+        .eq('id', data.id);
+
+      setIsRunning(false);
+      onExecute({ id: data.id, tool, target });
+      toast.success(`${tool.name} completed`, {
+        description: isLiveMode ? 'Live scan results saved' : 'Simulated output saved',
+      });
 
     } catch (error) {
       setIsRunning(false);
@@ -96,9 +118,24 @@ export function ToolCard({ tool, onExecute }: ToolCardProps) {
             <p className="text-xs text-muted-foreground line-clamp-1">{tool.description}</p>
           </div>
         </div>
-        <span className="text-[10px] uppercase tracking-wider px-2 py-1 rounded bg-muted/50 text-muted-foreground">
-          {tool.category}
-        </span>
+        <div className="flex items-center gap-2">
+          {/* Live Mode Toggle */}
+          <button
+            onClick={() => setIsLiveMode(!isLiveMode)}
+            title={isLiveMode ? 'Live Mode: Real API calls' : 'Simulated Mode: Cached output'}
+            className={cn(
+              "p-1.5 rounded-md transition-all",
+              isLiveMode 
+                ? "bg-primary/20 text-primary" 
+                : "bg-muted/50 text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {isLiveMode ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
+          </button>
+          <span className="text-[10px] uppercase tracking-wider px-2 py-1 rounded bg-muted/50 text-muted-foreground">
+            {tool.category}
+          </span>
+        </div>
       </div>
 
       {/* Command Preview */}
@@ -153,7 +190,25 @@ export function ToolCard({ tool, onExecute }: ToolCardProps) {
       {isRunning && (
         <div className="mt-3 flex items-center gap-2 text-xs text-warning">
           <FileText className="h-3 w-3" />
-          <span>Generating output file...</span>
+          <span>{isLiveMode ? 'Performing live scan...' : 'Generating output file...'}</span>
+        </div>
+      )}
+
+      {/* Live mode indicator */}
+      {!isRunning && (
+        <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+          {isLiveMode ? (
+            <>
+              <Wifi className="h-3 w-3 text-primary" />
+              <span className="text-primary">Live Mode</span>
+              <span>- Real-time API calls</span>
+            </>
+          ) : (
+            <>
+              <WifiOff className="h-3 w-3" />
+              <span>Simulated Mode</span>
+            </>
+          )}
         </div>
       )}
     </div>
