@@ -312,7 +312,7 @@ Example: nmap -sV -O example.com
 
   return (
     <div 
-      className="h-full flex flex-col bg-[#0d1117] rounded-lg border border-[#30363d] overflow-hidden shadow-2xl"
+      className="h-full flex flex-col bg-[hsl(220,50%,5%)] rounded-xl border border-[hsl(205,100%,55%,0.2)] overflow-hidden shadow-[0_0_50px_rgba(59,130,246,0.1)]"
       onClick={() => inputRef.current?.focus()}
     >
       <TerminalHeader 
