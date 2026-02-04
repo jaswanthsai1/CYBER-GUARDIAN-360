@@ -15,17 +15,17 @@ interface TerminalInputProps {
 export const TerminalInput = forwardRef<HTMLInputElement, TerminalInputProps>(
   ({ value, onChange, onKeyDown, onSubmit, isProcessing, currentDir, username, hostname }, ref) => {
     return (
-      <form onSubmit={onSubmit} className="border-t border-[#2d2d44] bg-[#0d1117]">
+      <form onSubmit={onSubmit} className="border-t border-[hsl(205,100%,55%,0.2)] bg-[hsl(220,50%,5%)]">
         <div className="flex items-center px-3 py-2">
-          <span className="text-[#ff79c6] font-mono text-[13px] font-semibold">┌──(</span>
-          <span className="text-[#50fa7b] font-mono text-[13px] font-bold">{username}㉿{hostname}</span>
-          <span className="text-[#ff79c6] font-mono text-[13px] font-semibold">)-[</span>
-          <span className="text-[#8be9fd] font-mono text-[13px] font-bold">{currentDir}</span>
-          <span className="text-[#ff79c6] font-mono text-[13px] font-semibold">]</span>
+          <span className="text-[hsl(195,100%,50%)] font-mono text-[13px] font-semibold">┌──(</span>
+          <span className="text-[hsl(205,100%,55%)] font-mono text-[13px] font-bold">{username}㉿{hostname}</span>
+          <span className="text-[hsl(195,100%,50%)] font-mono text-[13px] font-semibold">)-[</span>
+          <span className="text-[hsl(35,100%,55%)] font-mono text-[13px] font-bold">{currentDir}</span>
+          <span className="text-[hsl(195,100%,50%)] font-mono text-[13px] font-semibold">]</span>
         </div>
         <div className="flex items-center px-3 pb-3">
-          <span className="text-[#ff79c6] font-mono text-[13px] font-semibold">└─</span>
-          <span className="text-[#50fa7b] font-mono text-[13px] font-bold mr-2">$</span>
+          <span className="text-[hsl(195,100%,50%)] font-mono text-[13px] font-semibold">└─</span>
+          <span className="text-[hsl(205,100%,55%)] font-mono text-[13px] font-bold mr-2">$</span>
           <input
             ref={ref}
             type="text"
@@ -35,8 +35,8 @@ export const TerminalInput = forwardRef<HTMLInputElement, TerminalInputProps>(
             disabled={isProcessing}
             placeholder={isProcessing ? "Executing..." : ""}
             className={cn(
-              "flex-1 bg-transparent font-mono text-[13px] text-[#f8f8f2] caret-[#50fa7b]",
-              "placeholder:text-[#44475a]",
+              "flex-1 bg-transparent font-mono text-[13px] text-[hsl(210,100%,90%)] caret-[hsl(205,100%,55%)]",
+              "placeholder:text-[hsl(210,30%,30%)]",
               "focus:outline-none",
               "disabled:opacity-50 disabled:cursor-not-allowed"
             )}
