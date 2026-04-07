@@ -20,18 +20,21 @@ export type Database = {
           created_at: string
           id: string
           output: string | null
+          user_id: string | null
         }
         Insert: {
           command: string
           created_at?: string
           id?: string
           output?: string | null
+          user_id?: string | null
         }
         Update: {
           command?: string
           created_at?: string
           id?: string
           output?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -46,6 +49,7 @@ export type Database = {
           status: string
           target: string
           tool_name: string
+          user_id: string | null
         }
         Insert: {
           category: string
@@ -57,6 +61,7 @@ export type Database = {
           status?: string
           target: string
           tool_name: string
+          user_id?: string | null
         }
         Update: {
           category?: string
@@ -68,6 +73,7 @@ export type Database = {
           status?: string
           target?: string
           tool_name?: string
+          user_id?: string | null
         }
         Relationships: []
       }
