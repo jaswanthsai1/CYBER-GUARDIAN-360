@@ -1,9 +1,8 @@
-import { Terminal, Menu, X, History, FolderOpen, BookOpen, LogOut } from 'lucide-react';
+import { Terminal, Menu, X, History, FolderOpen, BookOpen } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import cyberGuardianLogo from '@/assets/cyber-guardian-logo.png';
-import { useAuth } from '@/hooks/useAuth';
 
 const navLinks = [
   { path: '/', label: 'Dashboard', icon: null },
