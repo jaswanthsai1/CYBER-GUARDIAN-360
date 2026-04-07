@@ -5,7 +5,6 @@ import { TerminalInput } from './TerminalInput';
 import { linuxCommands, resolvePath } from './linuxCommands';
 import { supabase } from '@/integrations/supabase/client';
 import { tools } from '@/lib/tools';
-import { useAuth } from '@/hooks/useAuth';
 
 // Security tools that trigger backend execution
 const securityToolNames = [
