@@ -199,7 +199,7 @@ Example: nmap -sV -O example.com
         // Save to database
         const { data: sessionData, error: sessionError } = await supabase
           .from('terminal_sessions')
-          .insert({ command: trimmed, output: null, user_id: user?.id })
+          .insert({ command: trimmed, output: null })
           .select()
           .single();
 
