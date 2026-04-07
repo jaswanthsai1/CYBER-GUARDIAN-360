@@ -5,6 +5,7 @@ import { TerminalInput } from './TerminalInput';
 import { linuxCommands, resolvePath } from './linuxCommands';
 import { supabase } from '@/integrations/supabase/client';
 import { tools } from '@/lib/tools';
+import { useAuth } from '@/hooks/useAuth';
 
 // Security tools that trigger backend execution
 const securityToolNames = [
@@ -36,6 +37,7 @@ export function Terminal() {
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [currentDir, setCurrentDir] = useState('/home/kali');
+  const { user } = useAuth();
   
   const inputRef = useRef<HTMLInputElement>(null);
   const terminalRef = useRef<HTMLDivElement>(null);
@@ -199,7 +201,7 @@ Example: nmap -sV -O example.com
         // Save to database
         const { data: sessionData, error: sessionError } = await supabase
           .from('terminal_sessions')
-          .insert({ command: trimmed, output: null })
+          .insert({ command: trimmed, output: null, user_id: user?.id })
           .select()
           .single();
 
