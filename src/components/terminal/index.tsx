@@ -36,7 +36,6 @@ export function Terminal() {
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [currentDir, setCurrentDir] = useState('/home/kali');
-  const { user } = useAuth();
   
   const inputRef = useRef<HTMLInputElement>(null);
   const terminalRef = useRef<HTMLDivElement>(null);
