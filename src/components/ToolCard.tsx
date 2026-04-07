@@ -5,6 +5,10 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { generateRealisticOutput } from '@/lib/realistic-outputs';
+import { useAuth } from '@/hooks/useAuth';
+import { z } from 'zod';
+
+const targetSchema = z.string().trim().min(1, 'Target is required').max(255, 'Target too long').regex(/^[a-zA-Z0-9.:/\-_@]+$/, 'Invalid characters in target');
 
 interface ToolCardProps {
   tool: Tool;
@@ -15,10 +19,12 @@ export function ToolCard({ tool, onExecute }: ToolCardProps) {
   const [target, setTarget] = useState('');
   const [isRunning, setIsRunning] = useState(false);
   const [isLiveMode, setIsLiveMode] = useState(true);
+  const { user } = useAuth();
 
   const handleExecute = async () => {
-    if (!target.trim()) {
-      toast.error('Please enter a target');
+    const parsed = targetSchema.safeParse(target);
+    if (!parsed.success) {
+      toast.error(parsed.error.errors[0].message);
       return;
     }
 
@@ -33,9 +39,10 @@ export function ToolCard({ tool, onExecute }: ToolCardProps) {
         .insert({
           tool_name: tool.name,
           category: tool.category,
-          target: target,
+          target: parsed.data,
           command: command,
           status: 'running',
+          user_id: user?.id,
         })
         .select()
         .single();
