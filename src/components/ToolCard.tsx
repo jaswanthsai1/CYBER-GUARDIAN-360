@@ -5,7 +5,6 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { generateRealisticOutput } from '@/lib/realistic-outputs';
-import { useAuth } from '@/hooks/useAuth';
 import { z } from 'zod';
 
 const targetSchema = z.string().trim().min(1, 'Target is required').max(255, 'Target too long').regex(/^[a-zA-Z0-9.:/\-_@]+$/, 'Invalid characters in target');
@@ -19,7 +18,6 @@ export function ToolCard({ tool, onExecute }: ToolCardProps) {
   const [target, setTarget] = useState('');
   const [isRunning, setIsRunning] = useState(false);
   const [isLiveMode, setIsLiveMode] = useState(true);
-  const { user } = useAuth();
 
   const handleExecute = async () => {
     const parsed = targetSchema.safeParse(target);
@@ -42,7 +40,6 @@ export function ToolCard({ tool, onExecute }: ToolCardProps) {
           target: parsed.data,
           command: command,
           status: 'running',
-          user_id: user?.id,
         })
         .select()
         .single();

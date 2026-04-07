@@ -1,9 +1,8 @@
-import { Terminal, Menu, X, History, FolderOpen, BookOpen, LogOut } from 'lucide-react';
+import { Terminal, Menu, X, History, FolderOpen, BookOpen } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import cyberGuardianLogo from '@/assets/cyber-guardian-logo.png';
-import { useAuth } from '@/hooks/useAuth';
 
 const navLinks = [
   { path: '/', label: 'Dashboard', icon: null },
@@ -16,7 +15,6 @@ const navLinks = [
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
-  const { user, signOut } = useAuth();
 
   return (
     <header className="sticky top-0 z-50 border-b border-primary/20 glass-strong">
@@ -52,18 +50,12 @@ export function Header() {
             ))}
           </nav>
 
-          {/* User & Sign Out */}
+          {/* Status Indicator */}
           <div className="hidden md:flex items-center gap-3">
-            <span className="font-mono text-xs text-muted-foreground truncate max-w-[150px]">
-              {user?.email}
-            </span>
-            <button
-              onClick={signOut}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all font-mono text-xs"
-            >
-              <LogOut className="h-3.5 w-3.5" />
-              Logout
-            </button>
+            <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-primary/20 to-secondary/20 border border-primary/30">
+              <div className="h-2 w-2 rounded-full bg-accent animate-pulse shadow-[0_0_10px_hsl(35,100%,55%)]" />
+              <span className="font-mono text-xs text-primary font-medium">ONLINE</span>
+            </div>
           </div>
 
           {/* Mobile Menu Button */}
