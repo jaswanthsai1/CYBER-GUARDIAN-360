@@ -5,7 +5,6 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { generateRealisticOutput } from '@/lib/realistic-outputs';
-import { useAuth } from '@/hooks/useAuth';
 import { z } from 'zod';
 
 const targetSchema = z.string().trim().min(1, 'Target is required').max(255, 'Target too long').regex(/^[a-zA-Z0-9.:/\-_@]+$/, 'Invalid characters in target');
